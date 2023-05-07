@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -19,6 +18,11 @@ public class PlayerController : MonoBehaviour
     public float jumpForce = 10;
     public bool isGrounded;
 
+    [Header("Fall")]
+    public float fallMultiplier;
+    private float gravityScale;
+
+
     [Header("Dash")]
     public bool canDash;
     public bool isDashing = false;
@@ -29,6 +33,7 @@ public class PlayerController : MonoBehaviour
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        gravityScale = rb.gravityScale;
     }
 
     private void Update()
@@ -48,39 +53,22 @@ public class PlayerController : MonoBehaviour
             Jump();
         }
 
-        if (Input.GetKeyDown(KeyCode.X) && canDash)
+        #region Fall Gravity
+
+        if (rb.velocity.y < 0)
         {
-            isDashing = true;
-            canDash = false;
-            dashEffect.emitting = true;
-            dashDir = new Vector2(horizontal, vertical);
-
-            if (dashDir == Vector2.zero)
-            {
-                dashDir = new Vector2(transform.localScale.x, 0);
-            }
-
-            //Stop Dash
-            StartCoroutine(StopDash());
-
+            rb.gravityScale = gravityScale * fallMultiplier;
+        }
+        else
+        {
+            rb.gravityScale = gravityScale;
         }
 
-        if (isDashing == true)
-        {
-            rb.velocity = dashDir.normalized * dashForce;
-            return;
-        }
+        #endregion
 
-
-        //If player click X button and canDash
-        // if (Input.GetKeyDown(KeyCode.X) && canDash)
-        // {
-        // StartCoroutine(Dash(new Vector2(horizontal, vertical)));
-        // }
 
         Restart();
     }
-
 
     #region  Movement
     private void Flip(float horizontal)
@@ -94,13 +82,17 @@ public class PlayerController : MonoBehaviour
             transform.localScale = new Vector3(-1, 1, 1);
         }
     }
+    #endregion
 
+    #region Jump
     private void Jump()
     {
         if (Input.GetKeyDown(KeyCode.C))
         {
-            rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+            rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
             isGrounded = false;
+            // rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+            // isGrounded = false;
         }
     }
 
@@ -109,33 +101,6 @@ public class PlayerController : MonoBehaviour
         return Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
     }
 
-    #endregion
-
-    #region Dash
-
-
-    IEnumerator StopDash()
-    {
-        yield return new WaitForSeconds(dashTime);
-        dashEffect.emitting = false;
-        isDashing = false;
-    }
-
-    // IEnumerator Dash(Vector2 direction)
-    // {
-    //     canDash = false;
-    //     isDashing = true;
-    //     float gravity = rb.gravityScale;
-    //     rb.gravityScale = 0;
-    //     rb.velocity = new Vector2(direction.x, direction.y) * dashForce;
-
-    //     dashEffect.emitting = true;
-    //     yield return new WaitForSeconds(dashTime);
-    //     dashEffect.emitting = false;
-
-    //     rb.gravityScale = gravity;
-    //     isDashing = false;
-    // }
     #endregion
 
     #region Debuging
