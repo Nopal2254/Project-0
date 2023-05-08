@@ -16,7 +16,6 @@ public class PlayerController : MonoBehaviour
     public Transform groundCheck;
     public float groundCheckRadius;
     public float jumpForce = 10;
-    public bool isGrounded;
 
     [Header("Fall")]
     public float fallMultiplier;
@@ -43,23 +42,24 @@ public class PlayerController : MonoBehaviour
 
         rb.velocity = new Vector2(horizontal * moveSpeed, rb.velocity.y);
 
-        Flip(horizontal);
+        Dash(horizontal, vertical);
 
         //If player grounded
         if (IsGround())
         {
-            isGrounded = true;
             canDash = true;
             Jump();
         }
 
         #region Fall Gravity
 
-        if (rb.velocity.y < 0)
+        //Jika player terjun , maka gravityScale * multiplier
+        if (rb.velocity.y < 0 && isDashing == false)
         {
             rb.gravityScale = gravityScale * fallMultiplier;
         }
-        else
+        //Jika player naik , maka gravityScale = normal
+        else if (rb.velocity.y >= 0 && isDashing == false)
         {
             rb.gravityScale = gravityScale;
         }
@@ -67,6 +67,7 @@ public class PlayerController : MonoBehaviour
         #endregion
 
 
+        Flip(horizontal);
         Restart();
     }
 
@@ -90,7 +91,6 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.C))
         {
             rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-            isGrounded = false;
             // rb.velocity = new Vector2(rb.velocity.x, jumpForce);
             // isGrounded = false;
         }
@@ -99,6 +99,47 @@ public class PlayerController : MonoBehaviour
     private bool IsGround()
     {
         return Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
+    }
+
+    #endregion
+
+    #region Dash
+
+    private void Dash(float horizontal, float vertical)
+    {
+        float gravity = rb.gravityScale;
+
+        if (Input.GetButtonDown("Dash") && canDash)
+        {
+
+            isDashing = true;
+            canDash = false;
+            dashEffect.emitting = true;
+            dashDir = new Vector2(horizontal, vertical);
+            rb.gravityScale = 0;
+
+            if (dashDir == Vector2.zero)
+            {
+                dashDir = new Vector2(transform.localScale.x, 0);
+            }
+
+            StartCoroutine(StopDash(gravity));
+        }
+
+        if (isDashing)
+        {
+            rb.velocity = dashDir.normalized * dashForce;
+            return;
+        }
+    }
+
+    IEnumerator StopDash(float gravity)
+    {
+        yield return new WaitForSeconds(dashTime);
+        dashEffect.emitting = false;
+        isDashing = false;
+
+        rb.gravityScale = gravity;
     }
 
     #endregion
