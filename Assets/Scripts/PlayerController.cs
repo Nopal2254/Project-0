@@ -25,6 +25,7 @@ public class PlayerController : MonoBehaviour
     public bool isDashing = false;
     public float dashForce = 14;
     public float dashTime = 0.5f;
+    public float decelerationTime = 0.25f;
     private Vector2 dashDir;
 
     private void Start()
@@ -124,7 +125,7 @@ public class PlayerController : MonoBehaviour
                 dashDir = new Vector2(transform.localScale.x, 0);
             }
 
-            StartCoroutine(StopDash(gravity));
+            StartCoroutine(StopDash(gravity, dashDir));
         }
 
         if (isDashing)
@@ -134,13 +135,37 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    IEnumerator StopDash(float gravity)
+    IEnumerator StopDash(float gravity, Vector2 direction)
     {
+        // Add counter force to stop upward dash
+        if (direction.y > 0)
+        {
+            StartCoroutine(Decelerate());
+        }
+
         yield return new WaitForSeconds(dashTime);
+
         dashEffect.emitting = false;
         isDashing = false;
 
         rb.gravityScale = gravity;
+    }
+
+    //Reduce upward dash
+    private IEnumerator Decelerate()
+    {
+        yield return new WaitForSeconds(dashTime);
+
+        float t = 0;
+        Vector2 velocity = rb.velocity;
+        while (t < decelerationTime)
+        {
+            t += Time.deltaTime;
+            rb.velocity = Vector2.Lerp(velocity, Vector2.zero, t / decelerationTime);
+            yield return null;
+        }
+
+        rb.velocity = Vector2.zero;
     }
 
     #endregion
