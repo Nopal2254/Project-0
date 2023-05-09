@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
@@ -20,7 +19,6 @@ public class PlayerController : MonoBehaviour
     [Header("Fall")]
     public float fallMultiplier;
     private float gravityScale;
-
 
     [Header("Dash")]
     public bool canDash;
@@ -68,7 +66,11 @@ public class PlayerController : MonoBehaviour
 
 
         Flip(horizontal);
-        Restart();
+
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            Restart();
+        }
     }
 
     #region  Movement
@@ -111,7 +113,6 @@ public class PlayerController : MonoBehaviour
 
         if (Input.GetButtonDown("Dash") && canDash)
         {
-
             isDashing = true;
             canDash = false;
             dashEffect.emitting = true;
@@ -144,13 +145,38 @@ public class PlayerController : MonoBehaviour
 
     #endregion
 
+    #region Trigger & Collision
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.gameObject.CompareTag("Dash Reset"))
+        {
+            canDash = true;
+            other.gameObject.SetActive(false);
+
+            StartCoroutine(SetActiveInSeconds(other.gameObject));
+        }
+    }
+
+    private void OnCollisionEnter2D(Collision2D other)
+    {
+        if (other.gameObject.CompareTag("Obstacle"))
+        {
+            Restart();
+        }
+    }
+
+    #endregion
+
     #region Debuging
     private void Restart()
     {
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-        }
+        UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
+    }
+
+    IEnumerator SetActiveInSeconds(GameObject dashReset)
+    {
+        yield return new WaitForSeconds(3);
+        dashReset.SetActive(true);
     }
 
     #endregion

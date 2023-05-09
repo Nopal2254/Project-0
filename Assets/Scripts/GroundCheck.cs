@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class GroundCheck : MonoBehaviour
 {
-    private PlayerController controller;
+    public PlayerController controller;
 
     private void Start()
     {
@@ -11,8 +11,9 @@ public class GroundCheck : MonoBehaviour
     }
 
 
-    private void DrawGizmos()
+    private void OnDrawGizmos()
     {
+        Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, controller.groundCheckRadius);
     }
 }
